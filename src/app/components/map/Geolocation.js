@@ -203,7 +203,6 @@ class Geolocation {
             this._accuracyLayer.setMap(this._map);
         }
         this._map.addOverlay(this._overlay);
-        // this._accuracyLayer.setSource(this._source);
         this._source.addFeature(this._accuracyFeature);
         this._accuracyLayer.setSource(this._source);
 

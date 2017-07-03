@@ -60,7 +60,6 @@ router.post('/', function (req, res) {
         required: 'The field "{{field}}" is required to setup marker!'
     };
     const rules = {
-        id: 'integer|above:0',
         user_id: 'integer|above:0',
         title: 'required|string|min:2',
         text: 'required|string|min:2',

@@ -109,7 +109,7 @@ router.post('/', function (req, res) {
         'confirmPassword.equals': 'Passwords must match'
     };
     const rules = {
-        id: 'integer|above',
+        id: 'integer|above:0',
         name: 'required|string|min:2',
         email: 'email|required',
         username: 'required|string|min:2',

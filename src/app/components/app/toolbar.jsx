@@ -9,6 +9,7 @@ import axios from "axios";
 import _mapManager from '../map/MapManager';
 import _measureLayer from "../map/MeasureLayer";
 import _geolocation from "../map/Geolocation";
+import _route from "../map/Route";
 
 import {
     markersInit, markersClearSource, markersObjects, markersRemoveInteraction, markersZoomToMarker
@@ -103,7 +104,7 @@ export default class TLToolbar extends React.Component {
         this._handleButtonActive(e, !isActive, type);
         if (isActive) {
             this.props.markers.removeInteraction(true);
-        } else { 
+        } else {
             _measureLayer.removeInteraction();
             this.props.markers.init(true);
         }
@@ -139,6 +140,9 @@ export default class TLToolbar extends React.Component {
     _handleButtonBlur = (e, flag) => {
         (flag) ? e.currentTarget.blur() : '';
     }
+    _handleSimulation = (e, flag) => {
+        _route.init();
+    }
 
     render() {
         return (
@@ -161,14 +165,11 @@ export default class TLToolbar extends React.Component {
                             </OverlayTrigger>
                             : null
                         }
-                        {this.props.currentUser.id > 0 ?
-                            <OverlayTrigger placement='bottom' overlay={<Tooltip id='tooltipMarkers'>Симулация</Tooltip>}>
-                                <Button onClick={(e) => { this._handleSimulation(e, 'Simulation'); this._handleButtonBlur(e, true); }} active={this.state.activeButton === 'Simulation'}>
-                                    <FontAwesome name='location-arrow' size='lg' />
-                                </Button>
-                            </OverlayTrigger>
-                            : null
-                        }
+                        <OverlayTrigger placement='bottom' overlay={<Tooltip id='tooltipMarkers'>Симулация</Tooltip>}>
+                            <Button onClick={(e) => { this._handleSimulation(e, 'simulation'); this._handleButtonBlur(e, true); }} active={this.state.activeButton === 'Simulation'}>
+                                <FontAwesome name='location-arrow' size='lg' />
+                            </Button>
+                        </OverlayTrigger>
                         <OverlayTrigger placement='bottom' overlay={<Tooltip id='tooltipMarkers'>Местоположение</Tooltip>}>
                             <Button onClick={(e) => { this._handleLocation(e, 'Location'); this._handleButtonBlur(e, true); }}>
                                 <FontAwesome name='map-marker' size='lg' />
