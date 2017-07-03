@@ -7,6 +7,7 @@ import axios from 'axios';
 
 import FieldGroup from './common/field-group';
 import shallowEquals from '../common/utils/shallow-equals';
+import { getUsers } from '../actions';
 
 const styles = {
     form: {
@@ -17,6 +18,19 @@ const styles = {
     }
 }
 
+@connect(
+    state => ({
+        currentUser: state.currentUser
+    }),
+    dispatch => ({
+        getUsers: () => {
+            axios.get('/api/users/')
+                .then((response) => {
+                    dispatch(getUsers(response.data));
+                })
+        }
+    })
+)
 export default class Sign extends React.Component {
     static propTypes = {
     };
@@ -99,6 +113,7 @@ export default class Sign extends React.Component {
                     message: `You have sucessfuly creted user: ${response.data.username}`,
                     showSuccess: true
                 });
+                this.props.getUsers();
             })
             .catch((error) => {
                 this.setState({

@@ -69,7 +69,7 @@ export default class Header extends React.Component {
                     {this.state.currentUser.id !== 0
                         ?
                         <Nav pullRight>
-                            <NavItem disabled><FontAwesome name='user-circle' /> <b>{this.props.currentUser.name}</b></NavItem>
+                            <NavItem><FontAwesome name='user-circle' /> <b>{this.props.currentUser.name}</b></NavItem>
                             <LinkContainer to="/logout">
                                 <NavItem eventKey={7}>Logout</NavItem>
                             </LinkContainer>

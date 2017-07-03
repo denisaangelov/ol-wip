@@ -41,7 +41,7 @@ export default class TLContainer extends React.Component {
 
     componentDidMount = () => {
         this.props.requestContainers();
-        this.props.markersObjects(this.props.currentUser);
+        // this.props.markersObjects(this.props.currentUser);
     }
 
     render() {

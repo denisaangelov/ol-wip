@@ -20,15 +20,12 @@ export default class Container extends React.Component {
     render() {
         return (
             <div className='container'>
-                <div className='row'>
-                    <Route exact path="/" component={Home} />
-                    {/*<Route path="/post/:id?" component={Post} />*/}
-                    <Route path="/map" component={TLMap} />
-                    <Route path="/login" component={Login} />
-                    <Route path="/signup" component={Sign} />
-                    <Route path="/about" component={About} />
-                    <Route path="/logout" component={Logout} />
-                </div>
+                <Route exact path="/" component={Home} />
+                <Route path="/map" component={TLMap} />
+                <Route path="/login" component={Login} />
+                <Route path="/signup" component={Sign} />
+                <Route path="/about" component={About} />
+                <Route path="/logout" component={Logout} />
             </div>
         );
     }

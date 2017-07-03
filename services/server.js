@@ -33,7 +33,7 @@ app.set('app', path.join(rootPath, 'app'));
 // uncomment after placing your favicon in /public
 //app.use(favicon(dirname + '/public/favicon.ico'));
 app.use(logger('dev'));
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '50mb' }));
 // app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 // app.use(express.static(path.join(rootPath, 'app/assets')));
@@ -85,8 +85,8 @@ const db = new sqlite3.Database(DB_FILE, (err) => {
         let result = db.get(`SELECT name FROM sqlite_master WHERE type='table' AND name=?;`, [table_name], (err, row) => {
             if (!row) {
                 let query = table_name === 'users'
-                    ? `CREATE TABLE ${table_name} (id INTEGER PRIMARY KEY, name TEXT, email TEXT, username TEXT, password TEXT, role TEXT);`
-                    : `CREATE TABLE ${table_name} (id INTEGER PRIMARY KEY, user_id INTEGER, title TEXT, text TEXT, coordinates TEXT, FOREIGN KEY(user_id) REFERENCES users(id));`;
+                    ? `CREATE TABLE ${table_name} (id INTEGER PRIMARY KEY, name TEXT, email TEXT, username TEXT, password TEXT, role TEXT, image TEXT);`
+                    : `CREATE TABLE ${table_name} (id INTEGER PRIMARY KEY, user_id INTEGER, title TEXT, text TEXT, coordinates TEXT, date INTEGER, image TEXT, FOREIGN KEY(user_id) REFERENCES users(id));`;
                 console.log(db);
                 db.run(query, [], (err) => {
                     if (!err) {

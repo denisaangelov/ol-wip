@@ -1,8 +1,9 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import axios from 'axios';
+import dateFormat from 'dateformat';
 
-import { Form, Tooltip, OverlayTrigger, Accordion, Panel, ListGroup, ListGroupItem, Badge, Button, ButtonToolbar, Modal, Table } from 'react-bootstrap';
+import { Form, Tooltip, OverlayTrigger, Accordion, Panel, ListGroup, ListGroupItem, Badge, Button, ButtonToolbar, Modal, Table, Image, FormGroup } from 'react-bootstrap';
 import FontAwesome from 'react-fontawesome';
 
 import ol from 'openlayers';
@@ -53,13 +54,46 @@ const mapDispatchToProps = (dispatch) => ({
         dispatch(markersZoomToSelection(flag));
     },
     markersObjects: (user) => {
-        return axios.get('/api/markers', { params: { userId: user.id } })
+        return axios.get('/api/markers', user.id ? { params: { userId: user.id } } : {})
             .then((response) => {
                 dispatch(markersObjects(response.data));
             });
     },
     selectObject: (selectedMarker) => {
         dispatch(selectObject(selectedMarker));
+    },
+    deleteMarker: (markerId, userId) => {
+        axios.delete('/api/markers/' + markerId)
+            .then((r) => {
+                axios.get('/api/markers', userId ? { params: { userId: userId } } : {})
+                    .then((response) => {
+                        dispatch(markersObjects(response.data));
+                    });
+            });
+    },
+    postMarker: (marker, userId) => {
+        axios.post('/api/markers/', marker)
+            .then((r) => {
+                axios.get('/api/markers', userId ? { params: { userId: userId } } : {})
+                    .then((response) => {
+                        dispatch(markersObjects(response.data));
+                    });
+            })
+            .catch((error) => {
+                console.log(error.response.data);
+            });
+    },
+    putMarker: (marker, userId) => {
+        axios.put('/api/markers/' + marker.id, marker)
+            .then((r) => {
+                axios.get('/api/markers', userId ? { params: { userId: userId } } : {})
+                    .then((response) => {
+                        dispatch(markersObjects(response.data));
+                    });
+            })
+            .catch((error) => {
+                console.log(error.response.data);
+            });
     }
 });
 
@@ -80,11 +114,16 @@ export default class TLPanelBody extends React.PureComponent {
             // defaultExpanded: '',
             modalShow: false,
             // modalBody: {},
-            text: '',
-            title: '',
-            coordinates: ''
+            marker: {
+                id: 0,
+                text: '',
+                title: '',
+                coordinates: '',
+                date: Date.now(),
+                image: ''
+            },
+            requestType: 'post'
         }
-
         this._map = _mapManager.getMap();
         this._projection = _mapManager.getProjection();
         this._isMapSet = true;
@@ -93,7 +132,7 @@ export default class TLPanelBody extends React.PureComponent {
         this._source = new ol.source.Vector({
             features: this._features
         });
-        this._markersOverlay = new ol.layer.Vector({
+        this._markersLayer = new ol.layer.Vector({
             source: this._source,
             style: new ol.style.Style({
                 fill: new ol.style.Fill({
@@ -130,11 +169,11 @@ export default class TLPanelBody extends React.PureComponent {
 
             if (!this._map) {
                 this._map = _mapManager.getMap();
-                this._markersOverlay.setMap(this._map);
+                this._markersLayer.setMap(this._map);
                 this.addOverlays(nextProps.markers.markersObjects);
             } else {
                 // this._source.clear();
-                this._markersOverlay.setMap(this._map);
+                this._markersLayer.setMap(this._map);
                 this.addOverlays(nextProps.markers.markersObjects);
             }
         }
@@ -168,9 +207,7 @@ export default class TLPanelBody extends React.PureComponent {
     }
 
     componentDidUpdate() {
-        // @todo
-        // this.addOverlays(this.state.markersObjects)
-        this.addOverlays(this.state.markersObjects);
+        this._map = _mapManager.getMap();
     }
 
     render() {
@@ -189,14 +226,17 @@ export default class TLPanelBody extends React.PureComponent {
                     show={this.state.modalShow}
                     onHide={(e) => { this._handleModalExit(e); }}
                 >
-                    {/*dialogClassName='custom-modal'*/}
                     <Modal.Header closeButton closeLabel='Затвори' onHide={(e) => { this._handleCancel(e); }}>
                         <Modal.Title id='contained-modal-title-lg'>Въвеждане на нов маркер</Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
                         <Form>
-                            <FieldGroup id='formTitle' label='Title' type='text' placeholder="Enter title" value={this.state.title} onChange={(e) => this._handleOnChange(e, 'title')} />
-                            <FieldGroup id='formText' label='Text' type='text' placeholder="Enter text" componentClass="textarea" value={this.state.text} onChange={(e) => this._handleOnChange(e, 'text')} />
+                            <FieldGroup id='formTitle' label='Title' type='text' placeholder="Enter title" value={this.state.marker.title} onChange={(e) => this._handleOnChange(e, 'title')} />
+                            <FieldGroup id='formText' label='Text' type='text' placeholder="Enter text" componentClass="textarea" value={this.state.marker.text} onChange={(e) => this._handleOnChange(e, 'text')} />
+                            <FieldGroup id='formFile' label='File' type='file' placeholder="Choose file" onChange={(e) => this._handleImageOnChange(e, 'image')} />
+                            <FormGroup controlId='formImage'>
+                                <Image id='formImage' src={this.state.marker.image} />
+                            </FormGroup>
                             <ButtonToolbar>
                                 <Button type="submit" bsStyle="success" onClick={(e) => this._handleOnSubmit(e)}>
                                     Submit
@@ -204,7 +244,15 @@ export default class TLPanelBody extends React.PureComponent {
                                 <Button type="reset" bsStyle="warning" onClick={(e) => this._handleCancel(e)}>
                                     Reset
                                 </Button>
+                                {(this.state.currentUser && this.state.currentUser.id)
+                                    ?
+                                    <Button type="reset" bsStyle="danger" onClick={(e) => this._handleDelete(e)}>
+                                        Delete
+                                    </Button>
+                                    : null
+                                }
                             </ButtonToolbar>
+
                         </Form>
                     </Modal.Body>
                 </Modal>
@@ -214,122 +262,52 @@ export default class TLPanelBody extends React.PureComponent {
 
     _handleOnChange = (e, field) => {
         this.setState({
-            [field]: e.target.value
-        });
+            marker: Object.assign({}, this.state.marker, {
+                [field]: e.target.value
+            })
+        })
+    }
+
+    _handleImageOnChange = (e, field) => {
+        var preview = document.getElementById('formImage');
+        var file = document.getElementById('formFile').files[0];
+        var reader = new FileReader();
+
+        if (file) {
+            reader.readAsDataURL(file);
+        }
+
+        reader.addEventListener("load", () => {
+            // console.log(reader.result);
+            preview.src = reader.result;
+            this.setState({
+                marker: Object.assign({}, this.state.marker, {
+                    image: reader.result
+                })
+            });
+        }, false);
 
     }
     _handleOnSubmit = (e) => {
         e.preventDefault();
         let marker = {
-            user_id: this.state.currentUser.user_id,
-            title: this.state.title,
-            text: this.state.text,
-            coordinates: this.state.coordinates
+            id: this.state.marker.id,
+            user_id: this.state.currentUser.id,
+            title: this.state.marker.title,
+            text: this.state.marker.text,
+            coordinates: this.state.marker.coordinates,
+            date: Date.now(),
+            image: this.state.marker.image
         }
-        axios.post('/api/markers/', marker);
-        this.props.markersObjects(this.state.currentUser);
-        // this.props.requestPosts();
+
+        if (this.state.requestType === 'post')
+            this.props.postMarker(marker, this.state.currentUser.id);
+        else if (this.state.requestType === 'put')
+            this.props.putMarker(marker, this.state.currentUser.id);
+
         this._handleCancel(e);
 
     }
-    _handleCancel = (e) => {
-        this._source.clear();
-        // this._draw.getFeatures().clear();
-        this.setState({
-            title: '',
-            text: '',
-            coordinates: '',
-            modalShow: false
-        });
-    }
-
-    addOverlays = (objects) => {
-        if (!objects.length)
-            return null;
-        else {
-            if (this._map) {
-                objects.forEach((object, idx) => {
-                    const coordinates = object.coordinates.split(',');
-
-                    let positionUTM35 = _mapProjection.convertWGS84ToUTM35([coordinates[1], coordinates[0]]);
-                    let id = 'foo-img' + idx;
-                    let element = document.getElementById(id);
-                    if (!element) {
-                        element = document.createElement('div');
-                        element.id = id;
-                        let img = document.createElement('img');
-                        img.src = 'src/app/assets/img/pin.png';
-                        element.appendChild(img);
-                    }
-                    if (this._map.getOverlayById(id)) {
-                        this._map.addOverlay(this._map.getOverlayById(id));
-                    }
-
-                    const marker = new ol.Overlay({
-                        id: id,
-                        position: positionUTM35,
-                        positioning: 'center-center',
-                        element: element,
-                        stopEvent: false,
-                        autoPan: true,
-                        autoPanAnimation: 'duration',
-
-                    });
-                    this._map.addOverlay(marker);
-                });
-            }
-        }
-    }
-
-    createAccordion = (objects) => {
-        if (!objects.length)
-            return null;
-
-        const accordion = objects.map((object, idx) => {
-            const key = object.title + idx;
-
-            const title = (<span className='tl-toc' title={object.title}>{object.title}</span>);
-            const children = this.createAccordionObjects(object);
-
-            const badge = null;
-
-            const info = (
-                <OverlayTrigger placement='top' overlay={<Tooltip id='tooltipBadge'>Местоположение</Tooltip>}>
-                    {/*<Button bsSize='xs' className='pull-right' >*/}
-                    <FontAwesome
-                        className='pull-right featuresInfoBtn'
-                        name="map-marker"
-                        size='lg'
-                        inverse
-                        onClick={(e) => { this._handleZoomToMarker(e, object.coordinates); }}
-                    />
-                    {/*</Button>*/}
-                </OverlayTrigger>
-            );
-            return (
-                <TLPanelItem key={key} title={title} info={info} badge={badge} bsStyle='primary' defaultExpanded={this.state.defaultExpanded === key}>
-                    {children}
-                </TLPanelItem>
-            )
-        });
-
-        return accordion;
-    }
-
-    // @todo
-    createAccordionObjects = (object) => {
-        const { text, user_id } = object;
-        let key = user_id;
-        let user = this.state.users.filter((user) => { return user.id === user_id })[0];
-        return (
-            <div style={styles.div}>
-                <FontAwesome name='user-circle' size='lg' /> <span>{user.username}</span>
-                <br />
-                <p>{text}</p>
-            </div>
-        );
-    }
-
     _handleZoomToMarker = (e, coordinates) => {
         e.preventDefault();
         e.stopPropagation();
@@ -345,6 +323,203 @@ export default class TLPanelBody extends React.PureComponent {
         );
 
     }
+
+    _handleEditMarker = (e, marker) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log(marker);
+        this.setState({
+            modalShow: true,
+            requestType: 'put',
+            marker: Object.assign({}, this.state.marker, marker)
+        });
+    }
+    _handleCancel = (e) => {
+        e.preventDefault();
+        this._source.clear();
+        // this._draw.getFeatures().clear();
+        this.setState({
+            marker: Object.assign({}, this.state.marker, {
+                title: '',
+                text: '',
+                coordinates: '',
+                date: Date.now(),
+                image: ''
+            }),
+            modalShow: false
+        });
+    }
+    _handleDelete = (e) => {
+        e.preventDefault();
+
+        console.log(this.state.marker.id);
+
+        this.props.deleteMarker(this.state.marker.id, this.state.currentUser.id);
+
+        this.setState({
+            marker: Object.assign({}, this.state.marker, {
+                title: '',
+                text: '',
+                coordinates: '',
+                date: Date.now(),
+                image: ''
+            }),
+            modalShow: false
+        });
+    }
+
+    addOverlays = (objects) => {
+        if (!objects.length)
+            return null;
+        else {
+            if (this._map) {
+                this._map.getOverlays().forEach((overlay) => {
+                    this._map.removeOverlay(overlay);
+                });
+
+                objects.forEach((object, idx) => {
+                    const coordinates = object.coordinates.split(',');
+
+                    let positionUTM35 = _mapProjection.convertWGS84ToUTM35([coordinates[1], coordinates[0]]);
+                    let id = 'markers-img' + idx;
+
+                    if (this._map.getOverlayById(id)) {
+                        this._map.removeOverlay(this._map.getOverlayById(id));
+                    }
+
+                    let element = document.getElementById(id);
+                    if (!element) {
+                        element = document.createElement('div');
+                        element.id = id;
+                        element.style.cursor = 'pointer';
+                        let img = document.createElement('img');
+                        img.src = 'src/app/assets/img/pin.png';
+                        element.appendChild(img);
+                    }
+
+                    const marker = new ol.Overlay({
+                        id: id,
+                        position: positionUTM35,
+                        positioning: 'center-center',
+                        element: element
+                        // stopEvent: false,
+                        // autoPan: true,
+                        // autoPanAnimation: 'easing',
+                        // insertFirst: false
+                    });
+                    this._map.addOverlay(marker);
+
+                    this._map.on('click', (evt) => {
+                        let popElements = document.getElementsByClassName('tl-popup');
+                        Array.prototype.forEach.call(popElements, function (elem) {
+                            $(elem).popover('hide');
+                        });
+                    });
+
+                    element.onclick = (evt) => {
+                        let popElements = document.getElementsByClassName('tl-popup');
+                        Array.prototype.forEach.call(popElements, function (elem) {
+                            $(elem).popover('hide');
+                        });
+
+                        let popElement = document.getElementById('tl-popup' + idx);
+                        if (!popElement) {
+                            popElement = document.createElement('div');
+                            popElement.id = 'tl-popup' + idx;
+                            popElement.className = 'tl-popup';
+                        }
+                        let popup = new ol.Overlay({
+                            element: popElement,
+                            position: positionUTM35,
+                            positioning: 'center-center',
+                        });
+                        this._map.addOverlay(popup);
+
+                        let user = this.state.users.filter((user) => { return user.id === object.user_id })[0];
+                        // $(popElement).popover('destroy');
+                        // the keys are quoted to prevent renaming in ADVANCED mode.
+                        $(popElement).popover({
+                            'delay': 100,
+                            'placement': 'auto',
+                            'animation': true,
+                            'html': true,
+                            'title': `<span class="fa fa-user-circle" aria-hidden="true"></span> <span>${user.username}</span>`,
+                            'content': object.title
+                        });
+                        $(popElement).popover('toggle');
+                        // setTimeout(() => {
+                        // }, 100);
+                    };
+                });
+            }
+        }
+    }
+
+    createAccordion = (objects) => {
+        if (!objects.length)
+            return null;
+
+        const accordion = objects.map((object, idx) => {
+            const key = object.title + idx;
+
+            const title = (<span className='tl-toc' title={object.title}>{object.title}</span>);
+            const children = this.createAccordionObjects(object);
+
+            const badge = this.state.currentUser.id
+                ? <OverlayTrigger placement='top' overlay={<Tooltip id='tooltipEdit'>Редакция</Tooltip>}>
+                    <FontAwesome
+                        className='pull-right featuresInfoBtn'
+                        name="edit"
+                        size='lg'
+                        inverse
+                        onClick={(e) => { this._handleEditMarker(e, object); }}
+                    />
+                </OverlayTrigger>
+                : null
+                ;
+            const info = (
+                <OverlayTrigger placement='top' overlay={<Tooltip id='tooltipBadge'>Местоположение</Tooltip>}>
+                    <FontAwesome
+                        className='pull-right featuresInfoBtn'
+                        name="map-marker"
+                        size='lg'
+                        inverse
+                        onClick={(e) => { this._handleZoomToMarker(e, object.coordinates); }}
+                    />
+                </OverlayTrigger>
+            );
+
+            return (
+                <TLPanelItem key={key} title={title} info={info} badge={badge} bsStyle='primary' defaultExpanded={this.state.defaultExpanded === key}>
+                    {children}
+                </TLPanelItem>
+            )
+        });
+
+        return accordion;
+    }
+
+    // @todo
+    createAccordionObjects = (object) => {
+        const { text, user_id } = object;
+        let key = user_id;
+        let user = this.state.users.filter((user) => { return user.id === user_id })[0];
+        let date = dateFormat(object.date, 'HH:MM dd.mm.yyyy');
+        return (
+            <div style={styles.div}>
+                <FontAwesome name='user-circle' size='lg' /> <span>{user.username}</span>
+                <br />
+                <FontAwesome name='clock-o' size='lg' /> <span>{date}</span>
+                <br />
+                <p>{text}</p>
+                {object.image ?
+                    <Image src={object.image} responsive thumbnail />
+                    : null
+                }
+            </div>
+        );
+    }
+
 
     // @todo
     _handleSelection = (evt) => {
@@ -398,7 +573,10 @@ export default class TLPanelBody extends React.PureComponent {
                 let positionWGS84 = _mapProjection.convertUTM35ToWGS84(coordinates);
                 this.setState({
                     modalShow: true,
-                    coordinates: positionWGS84[1].toFixed(6) + ',' + positionWGS84[0].toFixed(6)
+                    marker: Object.assign({}, this.state.marker, {
+                        coordinates: positionWGS84[1].toFixed(6) + ',' + positionWGS84[0].toFixed(6)
+                    }),
+                    requestType: 'post'
                 });
             });
         }

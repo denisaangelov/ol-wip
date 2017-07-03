@@ -1,6 +1,7 @@
 import React from 'react';
 
 import mapManager from '../map/MapManager';
+import MapDOM from '../map/MapDOM';
 
 import shallowEquals from '../../common/utils/shallow-equals';
 

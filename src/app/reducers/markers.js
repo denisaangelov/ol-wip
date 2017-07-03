@@ -30,14 +30,3 @@ export const markersReducer = (state = { markersObjects: [] }, action) => {
 }
 
 export default markersReducer;
-
-function getMarkers() {
-    return axios.get('/api/markers/')
-        .then((response) => {
-            return response.data;
-        })
-        .catch((error) => {
-            console.log(error.response.data.message);
-            return [];
-        });
-}

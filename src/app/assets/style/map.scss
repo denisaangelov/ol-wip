@@ -130,6 +130,9 @@ html, body {
 .ol-control button:hover {
     background-color:  $color-primary-dark
 }
+.popover-content {
+    min-width: 180px;
+}
 
 @media (max-width: 767px) {
     .tl-sidebar {
