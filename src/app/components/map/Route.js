@@ -54,11 +54,11 @@ class Route {
             geometry: new ol.geom.Point(routeCoords[0])
         });
         let startMarker = new ol.Feature({
-            type: 'icon',
+            type: 'icon-start',
             geometry: new ol.geom.Point(routeCoords[0])
         });
         let endMarker = new ol.Feature({
-            type: 'icon',
+            type: 'icon-finish',
             geometry: new ol.geom.Point(routeCoords[routeLength - 1])
         });
 
@@ -68,10 +68,16 @@ class Route {
                     width: 6, color: [237, 212, 0, 0.8]
                 })
             }),
-            'icon': new ol.style.Style({
+            'icon-start': new ol.style.Style({
                 image: new ol.style.Icon({
                     anchor: [0.5, 1],
-                    src: 'https://openlayers.org/en/v4.2.0/examples/data/icon.png'
+                    src: 'src/app/assets/img/route/start.png'
+                })
+            }),
+            'icon-finish': new ol.style.Style({
+                image: new ol.style.Icon({
+                    anchor: [0.5, 1],
+                    src: 'src/app/assets/img/route/finish.png'
                 })
             }),
             'geoMarker': new ol.style.Style({
@@ -102,6 +108,13 @@ class Route {
             }
         });
         vectorLayer.setMap(this._map);
+        this._map.getView().fit(
+            this._routeGeometry.getExtent(),
+            {
+                duration: 1000
+            }
+        );
+
         let moveFeature = (event) => {
             let vectorContext = event.vectorContext;
             let frameState = event.frameState;
@@ -135,12 +148,6 @@ class Route {
                 // hide geoMarker
                 geoMarker.setStyle(null);
                 // just in case you pan somewhere else
-                this._map.getView().fit(
-                    this._routeGeometry.getExtent(),
-                    {
-                        duration: 1000
-                    }
-                );
                 this._map.on('postcompose', moveFeature);
                 this._map.render();
             }

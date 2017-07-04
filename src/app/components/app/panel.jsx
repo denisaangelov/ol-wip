@@ -78,7 +78,7 @@ export default class TLPanel extends React.Component {
         if (this.state.mql.matches) {
              styles.root = { top: 50 }
         } else {
-             styles.root = { top: 100 }
+             styles.root = { top: 101 }
              touchHandleWidth = 10;
         }
         this.setState({

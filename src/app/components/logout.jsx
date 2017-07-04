@@ -1,5 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
+import { push } from 'react-router-redux';
 
 import { ButtonToolbar, Button, Form, FormGroup, Alert } from 'react-bootstrap';
 
@@ -26,6 +27,9 @@ const styles = {
     dispatch => ({
         logout: () => {
             dispatch(logout());
+        },
+        ok: () => {
+            dispatch(push('/'));
         }
     })
 )
@@ -42,11 +46,11 @@ export default class Logout extends React.Component {
 
     render() {
         return (
-            <Alert bsStyle='success' style={styles.alert} onDismiss={(e) => { this.setState({ showError: false }); }}>
-                <h4>Attention!</h4>
+            <Alert bsStyle='success' style={styles.alert}>
+                <h4>Внимание!</h4>
                 <p>Успешно излязохте от системата!</p>
                 <p>
-                    <Button onClick={this._handleButton}>OK!</Button>
+                    <Button bsStyle='primary' onClick={this._handleButton}>OK</Button>
                 </p>
             </Alert>
         );
@@ -54,5 +58,6 @@ export default class Logout extends React.Component {
 
     _handleButton = (e) => {
         e.preventDefault();
+        this.props.ok();
     }
 }

@@ -13,6 +13,7 @@ export default class TLMap extends React.Component {
         }
 
         // this.map = MapManager.getMap();
+        this._isInit = false;
         this.mapManager = null;
         this.id = 'tl-map-container';
         this.className = 'map';

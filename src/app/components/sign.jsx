@@ -46,10 +46,20 @@ export default class Sign extends React.Component {
                 confirmPassword: '',
                 role: 'PUBLIC'
             },
+            requestType: 'post',
             message: '',
             showError: false,
             showSuccess: false
         };
+    }
+
+    componentDidMount() {
+        if (this.props.currentUser.id) {
+            this.setState({
+                user: Object.assign({}, this.state.user, this.props.currentUser),
+                requestType: 'put'
+            });
+        }
     }
 
     componentWillReceiveProps(nextProps) {
@@ -106,21 +116,38 @@ export default class Sign extends React.Component {
     _handleSubmit = (e, field) => {
         e.preventDefault();
 
-        axios.post('/api/users', this.state.user)
-            .then((response) => {
-                this._handleReset(e);
-                this.setState({
-                    message: `You have sucessfuly creted user: ${response.data.username}`,
-                    showSuccess: true
+        if (this.state.requestType === 'post')
+            axios.post('/api/users', this.state.user)
+                .then((response) => {
+                    this._handleReset(e);
+                    this.setState({
+                        message: `You have sucessfuly creted user: ${response.data.username}`,
+                        showSuccess: true
+                    });
+                    this.props.getUsers();
+                })
+                .catch((error) => {
+                    this.setState({
+                        message: error.response.data.message,
+                        showError: true
+                    });
                 });
-                this.props.getUsers();
-            })
-            .catch((error) => {
-                this.setState({
-                    message: error.response.data.message,
-                    showError: true
+        else
+            axios.put('/api/users/' + this.props.currentUser.id, this.state.user)
+                .then((response) => {
+                    // this._handleReset(e);
+                    this.setState({
+                        message: `You have sucessfuly updated your profile!`,
+                        showSuccess: true
+                    });
+                    this.props.getUsers();
+                })
+                .catch((error) => {
+                    this.setState({
+                        message: error.response.data.message,
+                        showError: true
+                    });
                 });
-            });
     }
 
     _handleReset = (e) => {

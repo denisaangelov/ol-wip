@@ -111,7 +111,7 @@ export default class TLPanelBody extends React.PureComponent {
             users: [],
             currentUser: null,
             // doScroll: false,
-            // defaultExpanded: '',
+            defaultExpanded: '',
             modalShow: false,
             // modalBody: {},
             marker: {
@@ -242,9 +242,9 @@ export default class TLPanelBody extends React.PureComponent {
                                     Submit
                                 </Button>
                                 <Button type="reset" bsStyle="warning" onClick={(e) => this._handleCancel(e)}>
-                                    Reset
+                                    Cancel
                                 </Button>
-                                {(this.state.currentUser && this.state.currentUser.id)
+                                {(this.state.currentUser && this.state.currentUser.id && this.state.requestType === 'put')
                                     ?
                                     <Button type="reset" bsStyle="danger" onClick={(e) => this._handleDelete(e)}>
                                         Delete
@@ -278,7 +278,6 @@ export default class TLPanelBody extends React.PureComponent {
         }
 
         reader.addEventListener("load", () => {
-            // console.log(reader.result);
             preview.src = reader.result;
             this.setState({
                 marker: Object.assign({}, this.state.marker, {
@@ -327,7 +326,7 @@ export default class TLPanelBody extends React.PureComponent {
     _handleEditMarker = (e, marker) => {
         e.preventDefault();
         e.stopPropagation();
-        console.log(marker);
+
         this.setState({
             modalShow: true,
             requestType: 'put',
@@ -351,8 +350,6 @@ export default class TLPanelBody extends React.PureComponent {
     }
     _handleDelete = (e) => {
         e.preventDefault();
-
-        console.log(this.state.marker.id);
 
         this.props.deleteMarker(this.state.marker.id, this.state.currentUser.id);
 
@@ -447,8 +444,18 @@ export default class TLPanelBody extends React.PureComponent {
                             'content': object.title
                         });
                         $(popElement).popover('toggle');
-                        // setTimeout(() => {
-                        // }, 100);
+
+                        setTimeout(() => {
+                            const popover = popElement.nextSibling;
+                            popover.style.cursor = 'pointer';
+                            popover.onclick = (e) => { this._popElementHandleClick(e, object); };
+                            popover.onmouseover = function () {
+                                this.style.border = '1px solid black';
+                            };
+                            popover.onmouseout = function () {
+                                this.style.border = '1px solid rgba(0, 0, 0, 0.2)';
+                            };
+                        }, 200);
                     };
                 });
             }
@@ -460,7 +467,7 @@ export default class TLPanelBody extends React.PureComponent {
             return null;
 
         const accordion = objects.map((object, idx) => {
-            const key = object.title + idx;
+            const key = object.title + object.id;
 
             const title = (<span className='tl-toc' title={object.title}>{object.title}</span>);
             const children = this.createAccordionObjects(object);
@@ -490,7 +497,7 @@ export default class TLPanelBody extends React.PureComponent {
             );
 
             return (
-                <TLPanelItem key={key} title={title} info={info} badge={badge} bsStyle='primary' defaultExpanded={this.state.defaultExpanded === key}>
+                <TLPanelItem idx={object.id} key={key} title={title} info={info} badge={badge} bsStyle='primary' defaultExpanded={this.state.defaultExpanded === key}>
                     {children}
                 </TLPanelItem>
             )
@@ -520,6 +527,16 @@ export default class TLPanelBody extends React.PureComponent {
         );
     }
 
+    _popElementHandleClick = (e, object) => {
+        e.preventDefault();
+        const btn = $('#tl-panel-right').find('button.pull-right')
+        if (!btn.hasClass('hidden'))
+            btn.click();
+
+        this.setState({
+            defaultExpanded: object.title + object.id
+        });
+    }
 
     // @todo
     _handleSelection = (evt) => {

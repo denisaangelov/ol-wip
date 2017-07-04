@@ -24,6 +24,7 @@ export default class Container extends React.Component {
                 <Route path="/map" component={TLMap} />
                 <Route path="/login" component={Login} />
                 <Route path="/signup" component={Sign} />
+                <Route path="/profile" component={Sign} />
                 <Route path="/about" component={About} />
                 <Route path="/logout" component={Logout} />
             </div>

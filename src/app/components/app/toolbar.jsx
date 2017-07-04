@@ -53,7 +53,7 @@ const style = {
         padding: '8px 0',
         display: 'inline-block',
         position: 'absolute',
-        left: 'calc(50% - 158px)',
+        left: 'calc(50% - 177px)',
         zIndex: 1000
     }
 }
@@ -157,14 +157,11 @@ export default class TLToolbar extends React.Component {
                     </ButtonGroup>
 
                     <ButtonGroup>
-                        {this.props.currentUser.id > 0 ?
-                            <OverlayTrigger placement='bottom' overlay={<Tooltip id='tooltipMarkers'>Маркер</Tooltip>}>
-                                <Button onClick={(e) => { this._handleMarker(e, 'Marker'); this._handleButtonBlur(e, true); }} active={this.state.activeButton === 'Marker'}>
-                                    <Glyphicon glyph='pushpin' bsSize='large' />
-                                </Button>
-                            </OverlayTrigger>
-                            : null
-                        }
+                        <OverlayTrigger placement='bottom' overlay={<Tooltip id='tooltipMarkers'>Маркер</Tooltip>}>
+                            <Button onClick={(e) => { this._handleMarker(e, 'Marker'); this._handleButtonBlur(e, true); }} active={this.state.activeButton === 'Marker'} disabled={!this.props.currentUser.id}>
+                                <Glyphicon glyph='pushpin' bsSize='large' />
+                            </Button>
+                        </OverlayTrigger>
                         <OverlayTrigger placement='bottom' overlay={<Tooltip id='tooltipMarkers'>Симулация</Tooltip>}>
                             <Button onClick={(e) => { this._handleSimulation(e, 'simulation'); this._handleButtonBlur(e, true); }} active={this.state.activeButton === 'Simulation'}>
                                 <FontAwesome name='location-arrow' size='lg' />

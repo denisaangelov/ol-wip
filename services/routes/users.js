@@ -101,7 +101,7 @@ router.post('/', function (req, res) {
     console.log(body);
 
     const messages = {
-        required: 'The field "{{field}}" is required to setup profile',
+        required: 'The field "{{field}}" is required to edit profile',
         // 'name': 'Name is required to setup profile',
         'email': 'Invalid email',
         // 'username': 'Username is required to setup profile',
@@ -157,6 +157,47 @@ router.delete('/:userId', function (req, res) {
             });
         }).catch(errors => {
             error(req, res, 400, 'Invalid user ID: ' + util.inspect(errors), errors[0]);
+        });
+});
+
+// Edit user info
+router.put('/:userId', function (req, res) {
+    const db = req.app.locals.db;
+    let user = req.body;
+    console.log(user);
+    const messages = {
+        required: 'The field "{{field}}" is required to setup profile',
+        // 'name': 'Name is required to setup profile',
+        'email': 'Invalid email',
+        // 'username': 'Username is required to setup profile',
+        // 'password': 'Password is required to setup profile',
+        'confirmPassword.equals': 'Passwords must match'
+    };
+    const rules = {
+        id: 'integer|above:0',
+        name: 'required|string|min:2',
+        email: 'email|required',
+        password: 'required|string|min:2',
+        confirmPassword: 'required|string|equals:' + user.password
+    };
+
+    indicative.validate(user, rules, messages)
+        .then(() => {
+            db.run(`UPDATE users 
+                    SET name = ?, email = ?, password = ?
+                    WHERE id = ?;`, [user.name, user.email, user.password, user.id], function (err) {
+                    if (err) {
+                        console.error(err);
+                        error(req, res, 500, `Error editing user: ${user}`, { message: `Error editing user: ${user}` });
+                    }
+                    user.id = this.lastID;
+                    const uri = req.baseUrl + '/' + user.id;
+                    console.log('Updated: ', uri);
+                    res.status(200).json(user);
+                });
+        })
+        .catch((errors) => {
+            error(req, res, 400, `Invalid user data: ${util.inspect(errors)}`, errors[0]);
         });
 });
 

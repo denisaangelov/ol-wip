@@ -30,8 +30,7 @@ export default class TLPanelItem extends React.PureComponent {
     }
 
     componentWillReceiveProps(nextProps) {
-        if (!shallowEquals(nextProps.defaultExpanded, this.state.expanded) && nextProps.defaultExpanded)
-            this.setState({ expanded: nextProps.defaultExpanded });
+        this.setState({ expanded: nextProps.defaultExpanded });
     }
 
     render() {

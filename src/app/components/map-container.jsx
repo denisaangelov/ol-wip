@@ -10,6 +10,12 @@ import TLMap from './app/map';
 import { requestContainers, receiveContainers, markersObjects } from '../actions';
 import { osm_layers } from '../data/MapData';
 
+const styles = {
+    div: {
+        margin: '0 -15px'
+    }
+}
+
 const mapStateToProps = (state) => ({
     map: state.map,
     currentUser: state.currentUser,
@@ -39,6 +45,9 @@ export default class TLContainer extends React.Component {
         super(props);
     }
 
+    componentWillReceiveProps(nextProps) {
+        console.log(nextProps);
+    }
     componentDidMount = () => {
         this.props.requestContainers();
         // this.props.markersObjects(this.props.currentUser);
@@ -46,7 +55,7 @@ export default class TLContainer extends React.Component {
 
     render() {
         return (
-            <div>
+            <div style={styles.div}>
                 <TLToolbar {...this.props} />
                 <div id='tl-panel-left'>
                     <TLPanel docked={false} pullRight={false} title="Слоеве" action="layers" {...this.props} />

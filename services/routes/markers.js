@@ -105,7 +105,7 @@ router.delete('/:markerId', function (req, res) {
         });
 });
 
-// Create new marker
+// Update marker info
 router.put('/:markerId', function (req, res) {
     const db = req.app.locals.db;
     let marker = req.body;
@@ -127,7 +127,7 @@ router.put('/:markerId', function (req, res) {
                 WHERE id = ?;`, [marker.user_id, marker.title, marker.text, marker.coordinates, marker.date, marker.image, marker.id], function (err) {
                 if (err) {
                     console.error(err);
-                    error(req, res, 500, `Error udateing marker: ${marker}`, { message: `Error updateing marker: ${marker}` });
+                    error(req, res, 500, `Error updateing marker: ${marker}`, { message: `Error updateing marker: ${marker}` });
                 }
                 marker.id = this.lastID;
                 const uri = req.baseUrl + '/' + marker.id;
