@@ -54,7 +54,7 @@ export default class Header extends React.Component {
                             <NavItem eventKey={3}>About</NavItem>
                         </LinkContainer>
                     </Nav>
-                    {this.state.currentUser.id === 0
+                    {!this.state.currentUser.id
                         ?
                         <Nav pullRight>
                             <LinkContainer to="/login">
@@ -66,7 +66,7 @@ export default class Header extends React.Component {
                         </Nav>
                         : null
                     }
-                    {this.state.currentUser.id !== 0
+                    {this.state.currentUser.id
                         ?
                         <Nav pullRight>
                             <LinkContainer to="/profile">

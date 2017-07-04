@@ -21,7 +21,7 @@ export default class Home extends React.Component {
                 <Grid>
                     <Row>
                         <Jumbotron>
-                            <h3>Здравей, <b>{this.props.currentUser.name}</b></h3>
+                            <h3>Здравейте, <b>{this.props.currentUser.name}</b></h3>
                             <p>Добре дошли!</p>
                         </Jumbotron>
                     </Row>
